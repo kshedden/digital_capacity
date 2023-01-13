@@ -21,10 +21,21 @@ for (ky, df) in dm.items():
     cn = [x.replace("know_", "k_") for x in cn]
     cn = [x.replace("internet_", "i_") for x in cn]
     df.columns = cn
-    fa = sm.Factor(np.asarray(df), method="ml", n_factor=2)
-    fr = fa.fit()
-    fr = pd.DataFrame(fr.loadings, index=df.columns)
 
+    # Conside factor solutions of dimension 1-3
+    frl = []
+    for d in 1, 2, 3:
+        fa = sm.Factor(np.asarray(df), method="ml", n_factor=d)
+        fx = fa.fit()
+        n = df.shape[0]
+        print("loglike=", -fx.mle_retvals.fun * fx.model.k_endog * n, " ", fx.mle_retvals.x.size)
+        fr1 = pd.DataFrame(fx.loadings, index=df.columns)
+        frl.append(fr1)
+
+    # Use the dimension 2 solution
+    fr = frl[1]
+
+    # Flip for visualization
     for j in 0,1:
         if (fr.iloc[:, j] < 0).mean() > 0.5:
             fr.iloc[:, j] *= -1

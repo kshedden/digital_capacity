@@ -2,9 +2,14 @@ import pandas as pd
 import os
 import numpy as np
 
+"""
+Generate a file containing all unique responses to the survey
+questions of interest.
+"""
+
 pa = "/home/kshedden/data/Tawanna_Dillahunt"
 
-df = pd.read_csv(os.path.join(pa, "All-Valid-Responses.csv.gz"))
+df = pd.read_csv(os.path.join(pa, "All-Valid-Responses.csv.gz"), skiprows=1)
 
 items = [x for x in df.columns if x.startswith("Q")]
 
