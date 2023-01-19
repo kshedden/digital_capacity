@@ -26,6 +26,7 @@ tm = Dict(
 
 function make_plots(ifig)
     for (k, df) in dm
+        df = select(df, Not("Response_Id"))
         #df = df[completecases(df), :]
         vn = names(df)
         vn = [replace(x, "know_" => "k_") for x in vn]
@@ -57,6 +58,11 @@ function make_plots(ifig)
             :X1 => cc.Coord[:, 1],
             :X2 => cc.Coord[:, 2],
         )
+
+        write(out, "Difference in variable scores between first and last response level\n")
+        xx = combine(groupby(cc, :Variable), :X1=>x->first(x) - last(x), :X2=>x->first(x) - last(x))
+        write(out, string(xx))
+        write(out, "\n\n")
 
         PyPlot.clf()
         PyPlot.figure(figsize = (10, 8))

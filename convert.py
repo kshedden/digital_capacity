@@ -93,6 +93,12 @@ for (k, df) in dfm.items():
     vx = [x for x in df.columns if x.startswith("a_") or x.startswith("know_") or x.startswith("internet_")]
     vx = ["Response_Id"] + vx
     df = df[vx]
+
+    kfp = df["know_fewprob"].iloc[1:].replace({"True": 1, "False": 0}).astype(np.float64)
+    kap = df["know_allprob"].iloc[1:].replace({"True": 1, "False": 0}).astype(np.float64)
+    df["know_fewprob"].iloc[1:] = kfp + kap - 1
+    df = df.drop("know_allprob", axis=1)
+    df = df.rename({"know_fewprob": "know_prob"}, axis=1)
     df.to_csv(os.path.join(pa, "%s.csv.gz" % kx), index=None)
 
 out.close()

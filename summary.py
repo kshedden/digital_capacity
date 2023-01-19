@@ -36,6 +36,7 @@ def compare(d1, d2, labs, out):
     tst[labs[1]] = d3x.mean(0)
     tst["mean_diff"] = mdiff
     tst["pvalue"] = pval
+    tst["pvalue_adj"] = np.clip(pval * tst.shape[0], 0, 1)
 
     out.write("==== %s (n=%d) versus %s (n=%d) ====\n" %
               (labs[0], d1x.shape[0], labs[1], d3x.shape[0]))
