@@ -82,6 +82,13 @@ def do_recode(k, df):
     return df
 
 for (k, df) in dfm.items():
+
+    if k.startswith("Unfiltered"):
+        continue
+
+    if k.startswith("All Valid"):
+        df = df.iloc[1:, :]
+
     kx = k.replace(" ", "-")
     # Some of the files have spaces in variable names, others have underscores,
     # change everything to underscores.

@@ -6,7 +6,7 @@ pa = "/home/kshedden/data/Tawanna_Dillahunt"
 
 # Names of the files created by convert.py.
 fn = ["Michiganders.csv.gz", "Detroiters.csv.gz", "Non-Michiganders.csv.gz",
-      "Parkside-Residents.csv.gz"]
+      "Parkside-Residents.csv.gz", "All-Valid-Responses.csv.gz"]
 
 dx = []
 for f in fn:
@@ -14,22 +14,4 @@ for f in fn:
     dx.append(df)
 
 dm = {"mich": dx[0].copy(), "detroit": dx[1].copy(), "nonmich": dx[2].copy(),
-      "parkside": dx[3].copy()}
-
-# Create a pooled dataset with all cohorts and a region indicator.
-for j in range(4):
-    dx[j]["mi"] = 0
-    dx[j]["nm"] = 0
-    dx[j]["pa"] = 0
-    dx[j]["dt"] = 0
-    if j == 0:
-        dx[j]["mi"] = 1
-    elif j == 1:
-        dx[j]["nm"] = 1
-    elif j == 2:
-        dx[j]["pa"] = 1
-    elif j == 3:
-        dx[j]["dt"] = 1
-
-da = pd.concat(dx, axis=0)
-dm["all"] = da
+      "parkside": dx[3].copy(), "allvalid": dx[4].copy()}
