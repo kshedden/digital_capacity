@@ -69,19 +69,23 @@ for (ky, df) in dm.items():
 
     # Use the dimension 2 solution
     fr = frl[1]
+    fr.columns = ["1_load", "2_load"]
     scr = scores[1]
 
     # Flip for visualization
-    for j in 0,1:
-        if (fr.iloc[:, j] < 0).mean() > 0.5:
-            fr.iloc[:, j] *= -1
+    if (fr.iloc[:, 0] < 0).mean() > 0.5:
+        fr.iloc[:, 0] *= -1
+        scr[:, 0] *= -1
+    if fr.iloc[14, 1] < 0:
+        fr.iloc[:, 1] *= -1
+        scr[:, 1] *= -1
 
-    fr["0_r2"] = 0
-    fr["1_r2"] = 0
     for i in range(2):
-        fr.iloc[:, 2+i] = [np.corrcoef(scr[:, i], X[:, j])[0, 1] for j in range(X.shape[1])]
+        fr["%d_r" % (i + 1)] = [np.corrcoef(scr[:, i], X[:, j])[0, 1] for j in range(X.shape[1])]
+        fr["%d_r2" % (i + 1)] = fr["%d_r" % (i + 1)]**2
 
     out.write("==== %s (n=%d) ====\n" % (tm[ky], df.shape[0]))
+    out.write("\nCorrelations and squared correlations between each item and each factor:\n")
     out.write(fr.to_string())
     out.write("\n\n")
 
