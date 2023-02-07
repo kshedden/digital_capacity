@@ -78,7 +78,7 @@ def do_recode(k, df):
             if df[v].dtype is np.dtype('float64'):
                 df[v] += 1
             else:
-                df[v] = df[v].replace({False: 1, True: 2})
+                df[v] = df[v].replace({False: 1, True: 2, "False": 1, "True": 2})
     return df
 
 for (k, df) in dfm.items():

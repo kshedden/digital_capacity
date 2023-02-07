@@ -3,11 +3,12 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 import pandas as pd
-from read import dm
+from read import dm, dmp
 
 cm = plt.get_cmap("tab10")
 colors = {"i": cm(0), "k": cm(1/10), "a": cm(2/10)}
-tm = {"mich": "Michigan", "nonmich": "Non-Michigan", "detroit": "Detroit", "parkside": "Parkside", "all": "All locations"}
+tm = {"mich": "Michigan", "nonmich": "Non-Michigan", "detroit": "Detroit",
+      "parkside": "Parkside", "allvalid": "All valid responses"}
 
 pdf = PdfPages("factor.pdf")
 out = open("factor.txt", "w")
@@ -21,22 +22,22 @@ def loglike(S, n):
 
 for (ky, df) in dm.items():
 
+    print(ky)
+
     # All dataframes should have the same columns
     if ky == "mich":
         x = df.columns[1:]
-        print(x)
         io = open("vars.csv", "w")
         for i in range(len(x)):
             io.write("%d,%s\n" % (i+1, x[i]))
         io.close()
 
-    if ky == "all":
-        continue
-
-    print(ky)
     df = df.drop("Response_Id", axis=1)
-    df = df.dropna()
     df = df.iloc[:, 0:29]
+    ii = pd.notnull(df).all(1)
+    df = df.loc[ii, :]
+    dp = dmp[ky].loc[ii, :]
+
     cn = df.columns
     cn = [x.replace("know_", "k_") for x in cn]
     cn = [x.replace("internet_", "i_") for x in cn]
@@ -63,8 +64,8 @@ for (ky, df) in dm.items():
     aic -= aic.min()
     bic = np.asarray(bic)
     bic -= bic.min()
-    print(np.argmin(aic) + 1)
-    print(np.argmin(bic) + 1)
+    print("AIC: ", np.argmin(aic) + 1)
+    print("BIC: ", np.argmin(bic) + 1)
 
     # Use the dimension 2 solution
     fr = frl[1]
@@ -94,6 +95,26 @@ for (ky, df) in dm.items():
     plt.xlabel("Component 1", size=15)
     plt.ylabel("Component 2", size=15)
     pdf.savefig()
+
+    # Correlations between passive variables and factor scores
+    fr = []
+    for k in range(2):
+        for j in range(1, dp.shape[1]):
+            u = dp.iloc[:, j].unique()
+            u = [x for x in u if not pd.isnull(x)]
+            u.sort()
+            for i in range(len(u)):
+                x = scr[:, k]
+                y = (dp.iloc[:, j] == u[i]).values
+                ii = pd.notnull(x) & pd.notnull(y)
+                x = x[ii]
+                y = y[ii]
+                row = [dp.columns[j], u[i], k + 1, len(ii), np.corrcoef(x, y)[0, 1]]
+                fr.append(row)
+    dr = pd.DataFrame(fr, columns=["Variable", "Value", "Component", "N", "Correlation"])
+    dr["Z"] = np.sqrt(dr["N"]) * dr["Correlation"]
+    out.write(dr.to_string(index=None))
+    out.write("\n\n")
 
 pdf.close()
 out.close()
