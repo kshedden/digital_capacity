@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 import pandas as pd
+from scipy.stats import spearmanr
 from read import dm, dmp
 
 cm = plt.get_cmap("tab10")
@@ -104,18 +105,40 @@ for (ky, df) in dm.items():
     fr = []
     for k in range(2):
         for j in range(1, dp.shape[1]):
-            u = dp.iloc[:, j].unique()
-            u = [x for x in u if not pd.isnull(x)]
-            u.sort()
-            for i in range(len(u)):
+
+            # Quantitative possive variables
+            if dp.columns[j] in ["age", "hhs"]:
                 x = scr[:, k]
-                y = (dp.iloc[:, j] == u[i]).values
+                y = dp.iloc[:, j].values
                 ii = pd.notnull(x) & pd.notnull(y)
                 x = x[ii]
                 y = y[ii]
-                row = [dp.columns[j], u[i], k + 1, len(ii), np.corrcoef(x, y)[0, 1]]
+                row = [dp.columns[j], "", k + 1, len(ii), "", np.corrcoef(x, y)[0, 1]]
                 fr.append(row)
-    dr = pd.DataFrame(fr, columns=["Variable", "Value", "Component", "N", "Correlation"])
+            elif dp.columns[j] in ["money", "education"]:
+                x = scr[:, k]
+                y = dp.iloc[:, j].values
+                ii = pd.notnull(x) & pd.notnull(y)
+                x = x[ii]
+                y = y[ii]
+                row = [dp.columns[j], "", k + 1, len(ii), "", spearmanr(x, y).correlation]
+                fr.append(row)
+            else:
+                # Qualitative passive variables
+                u = dp.iloc[:, j].unique()
+                u = [x for x in u if not pd.isnull(x)]
+                u.sort()
+                for i in range(len(u)):
+                    x = scr[:, k]
+                    y = (dp.iloc[:, j] == u[i]).values
+                    ii = pd.notnull(x) & pd.notnull(y)
+                    x = x[ii]
+                    y = y[ii]
+                    if sum(y) < 10:
+                        continue
+                    row = [dp.columns[j], u[i], k + 1, len(ii), sum(y), np.corrcoef(x, y)[0, 1]]
+                    fr.append(row)
+    dr = pd.DataFrame(fr, columns=["Variable", "Value", "Component", "N", "N_value", "Correlation"])
     dr["Z"] = np.sqrt(dr["N"]) * dr["Correlation"]
     out.write(dr.to_string(index=None))
     out.write("\n\n")
