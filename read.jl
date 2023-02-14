@@ -33,11 +33,8 @@ end
 
 demog[:, :agegrp] = 10 * floor.(demog[:, :age] / 10)
 demog[!, :agegrp] = Vector{Union{Int,Missing}}(demog[:, :agegrp])
-demog[!, :sex] = Vector{Union{Int,Missing}}(demog[:, :sex])
-demogv = [:sex, :agegrp, :race]
+demogv = [:sex, :agegrp, :age, :race, :education, :money, :hhs]
 demog = demog[:, vcat(:Response_Id, demogv)]
-demog = rename(demog, :agegrp => :age)
-demogv = replace(demogv, :agegrp => :age)
 
 # Align demographic data with capacity data.
 dmp = Dict()

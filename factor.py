@@ -4,6 +4,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 import pandas as pd
 from scipy.stats import spearmanr
+from scipy.stats.distributions import norm
 from read import dm, dmp
 
 cm = plt.get_cmap("tab10")
@@ -113,7 +114,11 @@ for (ky, df) in dm.items():
                 ii = pd.notnull(x) & pd.notnull(y)
                 x = x[ii]
                 y = y[ii]
-                row = [dp.columns[j], "", k + 1, len(ii), "", np.corrcoef(x, y)[0, 1]]
+                n = sum(ii)
+                rr = np.corrcoef(x, y)[0, 1]
+                zz = 0.5*np.sqrt(n)*np.log((1+rr)/(1-rr))
+                p = 2*norm.cdf(-np.abs(zz))
+                row = [dp.columns[j], "", k + 1, n, "", rr, zz, p]
                 fr.append(row)
             elif dp.columns[j] in ["money", "education"]:
                 x = scr[:, k]
@@ -121,7 +126,9 @@ for (ky, df) in dm.items():
                 ii = pd.notnull(x) & pd.notnull(y)
                 x = x[ii]
                 y = y[ii]
-                row = [dp.columns[j], "", k + 1, len(ii), "", spearmanr(x, y).correlation]
+                rr = spearmanr(x, y)
+                zz = np.sign(rr.correlation) * np.abs(norm.ppf(rr.pvalue/2))
+                row = [dp.columns[j], "", k + 1, len(ii), "", rr.correlation, zz, rr.pvalue]
                 fr.append(row)
             else:
                 # Qualitative passive variables
@@ -136,12 +143,26 @@ for (ky, df) in dm.items():
                     y = y[ii]
                     if sum(y) < 10:
                         continue
-                    row = [dp.columns[j], u[i], k + 1, len(ii), sum(y), np.corrcoef(x, y)[0, 1]]
+                    n = sum(ii)
+                    rr = np.corrcoef(x, y)[0, 1]
+                    zz = 0.5*np.sqrt(n)*np.log((1+rr)/(1-rr))
+                    p = 2*norm.cdf(-np.abs(zz))
+                    row = [dp.columns[j], u[i], k + 1, n, sum(y), rr, zz, p]
                     fr.append(row)
-    dr = pd.DataFrame(fr, columns=["Variable", "Value", "Component", "N", "N_value", "Correlation"])
+    dr = pd.DataFrame(fr, columns=["Variable", "Value", "Component", "N", "N_value", "Correlation", "ZScore", "Pvalue"])
     dr["Z"] = np.sqrt(dr["N"]) * dr["Correlation"]
     out.write(dr.to_string(index=None))
     out.write("\n\n")
+
+    # Regression analysis of factor scores
+    dq = dp.copy()
+    dq["score1"] = scr[:, 0]
+    dq["score2"] = scr[:, 1]
+    for j in 1, 2:
+        m0 = sm.OLS.from_formula("score%d ~ age + sex + hhs + money + education" % j, data=dq)
+        r0 = m0.fit()
+        out.write(r0.summary().as_text())
+        out.write("\n\n")
 
 pdf.close()
 out.close()

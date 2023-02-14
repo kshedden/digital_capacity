@@ -26,7 +26,7 @@ function passive_summary(out, xc, dp)
     vnames = names(dp)
     write(out, "Correlations between passive variables and components:\n")
 
-    dr = DataFrame(:Group=>String[], :Component=>Int[], :N=>Int[], :Corr=>Float64[], :Z=>Float64[])
+    dr = DataFrame(:Group=>String[], :Component=>Int[], :N=>Int[], :N1=>Int[], :Corr=>Float64[], :Z=>Float64[])
     for j in 1:size(xc, 2)
         for k in 1:size(dp, 2)
             u = unique(dp[:, k])
@@ -38,10 +38,16 @@ function passive_summary(out, xc, dp)
                 pos = (.!ismissing.(y)) .& (.!ismissing.(x))
                 if sum(pos) > 10
                     if min(std(x[pos]), std(y[pos])) > 1e-2
-                        r = cor(y[pos], x[pos])
-                        n = sum(skipmissing(y))
+                        yy = y[pos]
+                        xx = x[pos]
+                        ii = .!(ismissing.(y[pos]) .|| ismissing.(x[pos]))
+                        yy = yy[ii]
+                        xx = xx[ii]
+                        r = cor(yy, xx)
+                        n = length(xx)
+                        n1 = sum(yy)
                         z = r * sqrt(length(collect(skipmissing(y))))
-                        row = (Group=s, Component=j, N=n, Corr=r, Z=z)
+                        row = (Group=s, Component=j, N=n, N1=n1, Corr=r, Z=z)
                         push!(dr, row)
                     end
                 end
@@ -70,7 +76,18 @@ function rungroup(k, df, ifig)
 
     # Passive variables
     dp = dmp[k]
-    dp = select(dp, Not("Response_Id"))
+    f = function(x)
+        if ismissing(x)
+            return missing
+        elseif x == 1
+            return 1
+        elseif x == 2
+            return 2
+        end
+        return 3
+    end
+    dp[:, :hhsgrp] = f.(dp[:, :hhs])
+    dp = select(dp, [:sex, :race, :agegrp, :hhsgrp])
 
     println("Active variables: ", names(df))
     println("Passive variables: ", names(dp))
