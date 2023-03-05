@@ -20,7 +20,7 @@ dm = {"mich": dx[0].copy(), "detroit": dx[1].copy(), "nonmich": dx[2].copy(),
 demog = pd.read_csv(os.path.join(pa, "demog.csv.gz"))
 
 demog["agegrp"] = 10 * np.floor(demog["age"] / 10)
-demogv = ["sex", "age", "agegrp", "race", "hispanic", "hhs", "money", "education"]
+demogv = ["sex", "age", "agegrp", "race", "hhs", "money", "education", "work"]
 demog = demog[["Response_Id"] + demogv]
 
 # Align demographic data with capacity data.
