@@ -23,9 +23,16 @@ demog["agegrp"] = 10 * np.floor(demog["age"] / 10)
 demogv = ["sex", "age", "agegrp", "race", "hhs", "money", "education", "work"]
 demog = demog[["Response_Id"] + demogv]
 
+for c in demog.columns:
+    demog[c] = [x.strip() if type(x) is str else x for x in demog[c]]
+
 # Align demographic data with capacity data.
 dmp = {}
 for k in dm.keys():
     dx = pd.merge(dm[k], demog, on = "Response_Id", how="left")
     dmp[k] = dx[["Response_Id"] + demogv]
 
+# Save these datafiles
+for k in ["allvalid", "parkside"]:
+    dm[k].to_csv(os.path.join("data", "%s.csv.gz" % k), index=None)
+    dmp[k].to_csv(os.path.join("data", "%s_demog.csv.gz" % k), index=None)

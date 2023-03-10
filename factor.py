@@ -12,6 +12,35 @@ colors = {"i": cm(0), "k": cm(1/10), "a": cm(2/10)}
 tm = {"mich": "Michigan", "nonmich": "Non-Michigan", "detroit": "Detroit",
       "parkside": "Parkside", "allvalid": "All valid responses"}
 
+def get_cronbach(X):
+    vx = X.sum(1).var()
+    vy = X.var(0).sum()
+    k = X.shape[1]
+    f = k/(k-1)
+    return f*(1 - vy/vx)
+
+def cronbach():
+    df = dm["allvalid"]
+    df = df.drop("Response_Id", axis=1)
+    df = df.iloc[:, 0:29]
+    ii = pd.notnull(df).all(1)
+    df = df.loc[ii, :]
+
+    ability = df[[x for x in df.columns if x.startswith("a_")]]
+    internet = df[[x for x in df.columns if x.startswith("internet_")]]
+    know = df[[x for x in df.columns if x.startswith("know_")]]
+
+    out = open("cronbach.txt", "w")
+    X = np.asarray(df)
+    out.write("Overall (%d observations, %d items): %f\n" % (X.shape[0], X.shape[1], get_cronbach(X)))
+    X = np.asarray(ability)
+    out.write("Ability (%d observations, %d items): %f\n" % (X.shape[0], X.shape[1], get_cronbach(X)))
+    X = np.asarray(internet)
+    out.write("Internet (%d observations, %d items): %f\n" % (X.shape[0], X.shape[1], get_cronbach(X)))
+    X = np.asarray(know)
+    out.write("Know (%d observations, %d items): %f\n" % (X.shape[0], X.shape[1], get_cronbach(X)))
+    out.close()
+
 def train(df):
 
     X = np.asarray(df)
@@ -37,7 +66,9 @@ def train(df):
     bic = np.asarray(bic)
     bic -= bic.min()
     print("AIC: ", np.argmin(aic) + 1)
+    print(aic)
     print("BIC: ", np.argmin(bic) + 1)
+    print(bic)
 
     # Use the dimension 2 solution
     load = loadings[1]
@@ -195,6 +226,8 @@ def main(kyu, mode):
 mode = "allvalid"
 
 kyu = ["allvalid", "parkside"]
+
+cronbach()
 
 for mode in "allvalid", "":
     main(kyu, mode)
